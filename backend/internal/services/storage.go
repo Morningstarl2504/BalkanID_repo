@@ -8,8 +8,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/Morningstarl2504/BalkanID_repo/backend/database"
-	"github.com/Morningstarl2504/BalkanID_repo/backend/models"
+	"github.com/Morningstarl2504/BalkanID_repo/internal/database"
+	"github.com/Morningstarl2504/BalkanID_repo/internal/models"
 )
 
 type StorageService struct {

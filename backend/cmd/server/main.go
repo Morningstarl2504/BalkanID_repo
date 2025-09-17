@@ -5,11 +5,11 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/Morningstarl2504/BalkanID_repo/backend/internal/config"
-	"github.com/Morningstarl2504/BalkanID_repo/backend/internal/database"
-	"github.com/Morningstarl2504/BalkanID_repo/backend/internal/handlers"
-	"github.com/Morningstarl2504/BalkanID_repo/backend/internal/middleware"
-	"github.com/Morningstarl2504/BalkanID_repo/backend/internal/services"
+	"github.com/Morningstarl2504/BalkanID_repo/internal/config"
+	"github.com/Morningstarl2504/BalkanID_repo/internal/database"
+	"github.com/Morningstarl2504/BalkanID_repo/internal/handlers"
+	"github.com/Morningstarl2504/BalkanID_repo/internal/middleware"
+	"github.com/Morningstarl2504/BalkanID_repo/internal/services"
 )
 
 func main() {
