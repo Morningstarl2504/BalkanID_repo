@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/Morningstarl2504/BalkanID_repo/internal/services"
-	"github.com/Morningstarl2504/BalkanID_repo/internal/utils"
+	"filevault-backend/internal/services"
+	"filevault-backend/internal/utils"
 )
 
 func AuthMiddleware(authService *services.AuthService) gin.HandlerFunc {

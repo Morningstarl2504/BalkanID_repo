@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"net/http"
-	"path/filepath"
+
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/Morningstarl2504/BalkanID_repo/internal/models"
-	"github.com/Morningstarl2504/BalkanID_repo/internal/services"
-	"github.com/Morningstarl2504/BalkanID_repo/internal/utils"
+	"filevault-backend/internal/models"
+	"filevault-backend/internal/services"
+	"filevault-backend/internal/utils"
 )
 
 type FileHandler struct {

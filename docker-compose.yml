@@ -5,9 +5,9 @@ services:
     image: postgres:14
     container_name: filevault-postgres
     environment:
-      POSTGRES_DB: filevault
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: balkanid_db
+      POSTGRES_USER: balkanid_user1
+      POSTGRES_PASSWORD: qwer1234
     ports:
       - "5432:5432"
     volumes:
@@ -27,7 +27,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: postgres://postgres:password@postgres:5432/filevault?sslmode=disable
+      DATABASE_URL: postgres://balkanid_user1:qwer1234@postgres:5432/balkanid_db?sslmode=disable
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
       PORT: 8080
       UPLOAD_PATH: /app/uploads

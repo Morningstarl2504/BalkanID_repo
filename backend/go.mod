@@ -1,6 +1,6 @@
-module github.com/Morningstarl2504/BalkanID_repo
+module filevault-backend
 
-go 1.25.1
+go 1.24.0
 
 require (
 	github.com/gin-gonic/gin v1.10.1
