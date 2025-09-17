@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/Morningstarl2504/Balkanid_repo/internal/models"
-	"github.com/Morningstarl2504/Balkanid_repo/internal/services"
-	"github.com/Morningstarl2504/Balkanid_repo/internal/utils"
+	"github.com/Morningstarl2504/BalkanID_repo/backend/models"
+	"github.com/Morningstarl2504/BalkanID_repo/backend/services"
+	"github.com/Morningstarl2504/BalkanID_repo/backend/utils"
 )
 
 type FileHandler struct {

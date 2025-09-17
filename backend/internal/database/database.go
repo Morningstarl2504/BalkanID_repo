@@ -6,7 +6,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"github.com/Morningstarl2504/Balkanid_repo/internal/models"
+	"github.com/Morningstarl2504/BalkanID_repo/backend/internal/models"
 )
 
 var DB *gorm.DB

@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
-	"github.com/Morningstarl2504/Balkanid_repo/internal/utils"
+	"github.com/Morningstarl2504/BalkanID_repo/backend/utils"
 )
 
 type RateLimiter struct {

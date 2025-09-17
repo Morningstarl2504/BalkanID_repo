@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/Morningstarl2504/Balkanid_repo/internal/models"
+	"github.com/Morningstarl2504/BalkanID_repo/backend/models"
 )
 
 func SuccessResponse(c *gin.Context, message string, data interface{}) {

@@ -6,7 +6,7 @@ cd backend
 
 REM Initialize go module (if not already done)
 if not exist "go.mod" (
-    go mod init github.com/Morningstarl2504/Balkanid_repo
+    go mod init Balkanid_repo
 )
 
 REM Install dependencies

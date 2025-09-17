@@ -13,9 +13,9 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/Morningstarl2504/Balkanid_repo/internal/database"
-	"github.com/Morningstarl2504/Balkanid_repo/internal/models"
-	"github.com/Morningstarl2504/Balkanid_repo/internal/utils"
+	"github.com/Morningstarl2504/BalkanID_repo/backend/database"
+	"github.com/Morningstarl2504/BalkanID_repo/backend/models"
+	"github.com/Morningstarl2504/BalkanID_repo/backend/utils"
 )
 
 type FileService struct {
