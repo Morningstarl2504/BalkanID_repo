@@ -1,58 +1,47 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:14
     container_name: filevault-postgres
     environment:
-      POSTGRES_DB: balkanid_db
       POSTGRES_USER: balkanid_user1
       POSTGRES_PASSWORD: qwer1234
+      POSTGRES_DB: balkanid_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 30s
-      timeout: 10s
+      # CORRECTED: The database name now matches POSTGRES_DB
+      test: ["CMD-SHELL", "pg_isready -U balkanid_user1 -d balkanid_db"]
+      interval: 10s
+      timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   backend:
-    build: 
+    container_name: filevault-backend
+    build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: filevault-backend
     ports:
       - "8080:8080"
-    environment:
-      DATABASE_URL: postgres://balkanid_user1:qwer1234@postgres:5432/balkanid_db?sslmode=disable
-      JWT_SECRET: your-super-secret-jwt-key-change-in-production
-      PORT: 8080
-      UPLOAD_PATH: /app/uploads
-      MAX_FILE_SIZE: 52428800
-      RATE_LIMIT: 2
-      STORAGE_QUOTA: 10485760
-    volumes:
-      - ./uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    # IMPORTANT: You will need to uncomment and configure this for your Go app
+    environment:
+      - DATABASE_URL=postgres://balkanid_user1:qwer1234@postgres:5432/balkanid_db?sslmode=disable
 
   frontend:
-    build: 
+    container_name: filevault-frontend
+    build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: filevault-frontend
     ports:
-      - "3000:3000"
-    environment:
-      REACT_APP_API_URL: http://localhost:8080/api/v1
-    depends_on:
-      - backend
+      - "3000:80"
     restart: unless-stopped
 
 volumes:
   postgres_data:
+
