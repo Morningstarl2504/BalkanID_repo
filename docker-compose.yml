@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:14
+    container_name: filevault-postgres
+    environment:
+      POSTGRES_USER: balkanid_user1
+      POSTGRES_PASSWORD: qwer1234
+      POSTGRES_DB: balkanid_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # CORRECTED: The database name now matches POSTGRES_DB
+      test: ["CMD-SHELL", "pg_isready -U balkanid_user1 -d balkanid_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    container_name: filevault-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    # IMPORTANT: You will need to uncomment and configure this for your Go app
+    environment:
+      - DATABASE_URL=postgres://balkanid_user1:qwer1234@postgres:5432/balkanid_db?sslmode=disable
+
+  frontend:
+    container_name: filevault-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
