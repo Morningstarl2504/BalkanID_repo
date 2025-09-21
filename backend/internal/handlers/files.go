@@ -227,3 +227,61 @@ func (h *FileHandler) GetStorageStats(c *gin.Context) {
 
 	utils.SuccessResponse(c, "Storage stats retrieved successfully", stats)
 }
+func (h *FileHandler) ShareFile(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	fileIDStr := c.Param("id")
+	fileID, err := strconv.ParseUint(fileIDStr, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid file ID")
+		return
+	}
+
+	file, err := h.fileService.GetByID(uint(fileID))
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "File not found")
+		return
+	}
+
+	if file.UserID != userID.(uint) {
+		utils.ErrorResponse(c, http.StatusForbidden, "Access denied: you do not own this file")
+		return
+	}
+
+	// Toggle the public status
+	file.IsPublic = !file.IsPublic
+	if err := database.DB.Save(file).Error; err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update file status")
+		return
+	}
+
+	h.auditService.Log(c, "SHARE", "FILE", &file.ID, fmt.Sprintf("User toggled public access for '%s' to %v", file.OriginalFilename, file.IsPublic))
+	utils.SuccessResponse(c, "File public status updated successfully", file)
+}
+
+func (h *FileHandler) PublicDownload(c *gin.Context) {
+	fileIDStr := c.Param("id")
+	fileID, err := strconv.ParseUint(fileIDStr, 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid file ID")
+		return
+	}
+
+	file, err := h.fileService.GetByID(uint(fileID))
+	if err != nil || !file.IsPublic {
+		utils.ErrorResponse(c, http.StatusNotFound, "File not found or is not public")
+		return
+	}
+
+	fileData, err := h.storageService.Get(file.Content.SHA256Hash)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusNotFound, "File data not found in storage")
+		return
+	}
+
+	h.fileService.IncrementDownloadCount(file.ID)
+	// Note: We don't log the audit event with a user here, as the download is anonymous.
+	
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", file.OriginalFilename))
+	c.Header("Content-Type", file.Content.MimeType)
+	c.Data(http.StatusOK, file.Content.MimeType, fileData)
+}

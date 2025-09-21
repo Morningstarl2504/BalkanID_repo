@@ -50,7 +50,13 @@ func main() {
 			auth.POST("/login", authHandler.Login)
 		}
 
-		// Group for all routes that require authentication
+		// Public group for unauthenticated downloads of shared files
+		public := api.Group("/public")
+		{
+			public.GET("/files/:id/download", fileHandler.PublicDownload)
+		}
+
+		// Group for all routes that require standard user authentication
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware(authService))
 		{
@@ -60,12 +66,14 @@ func main() {
 			files := protected.Group("/files")
 			{
 				files.POST("/upload", fileHandler.UploadFile)
-				files.GET("", fileHandler.GetUserFiles) // Use "" for the group's root
-				files.GET("/:id/download", fileHandler.DownloadFile)
+				files.GET("", fileHandler.GetUserFiles)
+				files.GET("/:id/download", fileHandler.DownloadFile) // Authenticated download
 				files.DELETE("/:id", fileHandler.DeleteFile)
+				files.PUT("/:id/share", fileHandler.ShareFile) // Toggle sharing status
 			}
 		}
 
+		// Group for admin-only routes
 		admin := api.Group("/admin")
 		admin.Use(middleware.AuthMiddleware(authService), middleware.AdminMiddleware())
 		{
