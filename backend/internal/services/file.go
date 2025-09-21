@@ -64,15 +64,12 @@ func (s *FileService) Create(file *models.File) error {
 func (s *FileService) GetByUserID(userID uint, filters *models.SearchFilters) ([]*models.File, error) {
 	var files []*models.File
 	query := database.DB.Preload("Content").Preload("User").Where("user_id = ?", userID)
-
-	// Join with file_contents for filtering on content properties
 	query = query.Joins("JOIN file_contents ON file_contents.id = files.file_content_id")
 
 	if filters.Filename != "" {
 		query = query.Where("files.original_filename LIKE ?", "%"+filters.Filename+"%")
 	}
 	if filters.MimeType != "" {
-		// Handle cases like "image" which should match "image/png", "image/jpeg", etc.
 		query = query.Where("file_contents.mime_type LIKE ?", filters.MimeType+"%")
 	}
 	if filters.MinSize > 0 {
@@ -88,13 +85,10 @@ func (s *FileService) GetByUserID(userID uint, filters *models.SearchFilters) ([
 	}
 	if filters.EndDate != "" {
 		if t, err := time.Parse("2006-01-02", filters.EndDate); err == nil {
-			// Go to the end of the selected day
 			query = query.Where("files.created_at <= ?", t.Add(24*time.Hour-time.Nanosecond))
 		}
 	}
 
-	// Pagination should be applied in the handler, not the service, for better separation of concerns.
-	// But for simplicity in this context, we assume the handler does it.
 	err := query.Order("files.created_at DESC").Find(&files).Error
 	return files, err
 }
@@ -108,40 +102,56 @@ func (s *FileService) GetByID(id uint) (*models.File, error) {
 	return &file, nil
 }
 
-func (s *FileService) Delete(id uint) error {
-	return database.DB.Delete(&models.File{}, id).Error
-}
-
+// THE FIX: This function is now more robust.
 func (s *FileService) DeleteFileAndContent(fileID uint) error {
 	return database.DB.Transaction(func(tx *gorm.DB) error {
-		var file models.File
-		if err := tx.Preload("Content").First(&file, fileID).Error; err != nil {
+		// 1. Find the file record to get the content ID
+		var fileToDelete models.File
+		if err := tx.First(&fileToDelete, fileID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil // File already deleted, success.
+			}
 			return err
 		}
+		contentID := fileToDelete.FileContentID
 
+		// 2. Delete the specific file record
 		if err := tx.Delete(&models.File{}, fileID).Error; err != nil {
 			return err
 		}
 
-		var content models.FileContent
-		if err := tx.First(&content, file.FileContentID).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil
+		// 3. Count how many other files still reference the same content
+		var remainingReferences int64
+		tx.Model(&models.File{}).Where("file_content_id = ?", contentID).Count(&remainingReferences)
+
+		// 4. If no files are left referencing this content, delete the content and the physical file
+		if remainingReferences == 0 {
+			var contentToDelete models.FileContent
+			if err := tx.First(&contentToDelete, contentID).Error; err != nil {
+				// Content might already be gone, which is fine.
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return nil
+				}
+				return err
 			}
-			return err
+
+			// Delete physical file from storage
+			if err := s.storageService.Delete(contentToDelete.SHA256Hash); err != nil {
+				// Log the error but don't fail the transaction, as the DB record is more critical.
+				// In a real app, a cleanup job would handle orphaned files.
+			}
+
+			// Delete the content record from the database
+			return tx.Delete(&contentToDelete).Error
+		} else {
+			// Optional: Keep the reference_count column in sync for statistics
+			tx.Model(&models.FileContent{}).Where("id = ?", contentID).Update("reference_count", remainingReferences)
 		}
 
-		if content.ReferenceCount > 1 {
-			return tx.Model(&content).Update("reference_count", gorm.Expr("reference_count - 1")).Error
-		}
-		
-		if err := s.storageService.Delete(content.SHA256Hash); err != nil {
-			// Log this error but don't fail the transaction
-		}
-
-		return tx.Delete(&content).Error
+		return nil
 	})
 }
+
 
 func (s *FileService) IncrementDownloadCount(id uint) error {
 	return database.DB.Model(&models.File{}).Where("id = ?", id).

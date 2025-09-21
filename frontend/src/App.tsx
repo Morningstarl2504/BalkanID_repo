@@ -15,7 +15,7 @@ interface StorageStats { total_storage_used: number; original_storage_usage: num
 interface SystemStats { total_users: number; total_files: number; total_storage_used: number; original_total_size: number; deduplication_saved: number; savings_percentage: number; }
 
 // --- API HELPER ---
-const API_BASE_URL = 'http://localhost:8080/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
 const getAuthToken = () => localStorage.getItem('token');
 
 const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
@@ -222,7 +222,6 @@ const AdminDashboard: React.FC = () => {
     useEffect(() => {
         const fetchAdminData = async () => {
             try {
-                // THE FIX IS HERE: Add default pagination parameters to the admin files request
                 const params = new URLSearchParams({ page: '1', limit: '100' }).toString();
                 const [statsData, filesData] = await Promise.all([
                     apiRequest('/admin/stats'), 

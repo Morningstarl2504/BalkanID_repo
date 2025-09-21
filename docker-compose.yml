@@ -1,3 +1,4 @@
+# morningstarl2504/balkanid_repo/BalkanID_repo-f1fc3ed153144eb6d79e3c90f73a0f3d312b9c79/docker-compose.yml
 services:
   postgres:
     image: postgres:14
@@ -11,7 +12,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      # CORRECTED: The database name now matches POSTGRES_DB
       test: ["CMD-SHELL", "pg_isready -U balkanid_user1 -d balkanid_db"]
       interval: 10s
       timeout: 5s
@@ -29,7 +29,6 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
-    # IMPORTANT: You will need to uncomment and configure this for your Go app
     environment:
       - DATABASE_URL=postgres://balkanid_user1:qwer1234@postgres:5432/balkanid_db?sslmode=disable
 
@@ -38,10 +37,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # Pass the backend URL to the frontend build
+        - REACT_APP_API_URL=http://backend:8080/api/v1
     ports:
       - "3000:80"
     restart: unless-stopped
+    # Ensure the backend is running before the frontend starts
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
-
