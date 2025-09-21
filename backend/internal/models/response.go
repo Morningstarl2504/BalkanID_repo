@@ -1,3 +1,4 @@
+// morningstarl2504/balkanid_repo/BalkanID_repo-f1fc3ed153144eb6d79e3c90f73a0f3d312b9c79/backend/internal/models/response.go
 package models
 
 type Response struct {
@@ -24,11 +25,11 @@ type LoginResponse struct {
 }
 
 type StorageStats struct {
-	TotalUsed         int64   `json:"total_used"`
-	OriginalSize      int64   `json:"original_size"`
-	SavingsBytes      int64   `json:"savings_bytes"`
-	SavingsPercentage float64 `json:"savings_percentage"`
-	Quota             int64   `json:"quota"`
+	TotalUsed         int64   `json:"total_storage_used"`
+	OriginalSize      int64   `json:"original_storage_usage"`
+	SavingsBytes      int64   `json:"storage_savings_bytes"`
+	SavingsPercentage float64 `json:"storage_savings_percentage"`
+	Quota             int64   `json:"user_quota"`
 }
 
 type SearchFilters struct {

@@ -1,3 +1,4 @@
+// morningstarl2504/balkanid_repo/BalkanID_repo-f1fc3ed153144eb6d79e3c90f73a0f3d312b9c79/backend/internal/middleware/cors.go
 package middleware
 
 import (
@@ -7,19 +8,8 @@ import (
 // CORS middleware for handling Cross-Origin requests
 func CORS() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-		
-		// Allow specific origins
-		allowedOrigins := map[string]bool{
-			"http://localhost:3000":    true,
-			"http://127.0.0.1:3000":   true,
-			"http://localhost:3001":    true, // In case you use a different port
-		}
-
-		if allowedOrigins[origin] {
-			c.Header("Access-Control-Allow-Origin", origin)
-		}
-
+		// Allow requests from the React development server
+		c.Header("Access-Control-Allow-Origin", "http://localhost:3000")
 		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Header("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")

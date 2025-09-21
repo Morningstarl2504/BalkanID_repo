@@ -1,3 +1,4 @@
+// morningstarl2504/balkanid_repo/BalkanID_repo-f1fc3ed153144eb6d79e3c90f73a0f3d312b9c79/backend/cmd/server/main.go
 package main
 
 import (
@@ -27,66 +28,55 @@ func main() {
 	authService := services.NewAuthService(cfg.JWTSecret)
 	storageService := services.NewStorageService(cfg.UploadPath)
 	fileService := services.NewFileService(storageService, cfg.MaxFileSize)
+	auditService := services.NewAuditService()
 	authHandler := handlers.NewAuthHandler(authService)
-	fileHandler := handlers.NewFileHandler(fileService, storageService)
-	adminHandler := handlers.NewAdminHandler(fileService, storageService)
+	fileHandler := handlers.NewFileHandler(fileService, storageService, auditService)
+	adminHandler := handlers.NewAdminHandler(fileService, storageService, auditService)
 	rateLimiter := middleware.NewRateLimiter(cfg.RateLimit, 10)
 
 	router := gin.Default()
 
-	// Use only ONE CORS middleware
+	// Apply CORS and Rate Limiter to all routes
 	router.Use(middleware.CORS())
 	router.Use(rateLimiter.Middleware())
 
 	router.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
 
 	api := router.Group("/api/v1")
-
-	auth := api.Group("/auth")
 	{
-		auth.POST("/register", authHandler.Register)
-		auth.POST("/login", authHandler.Login)
-	}
-
-	public := api.Group("/public")
-	{
-		public.GET("/files", fileHandler.GetPublicFiles)
-		public.GET("/files/:id/download", fileHandler.DownloadFile)
-		public.POST("/files/upload", fileHandler.UploadFile)
-	}
-
-	protected := api.Group("/")
-	protected.Use(middleware.AuthMiddleware(authService))
-	{
-		protected.GET("/profile", authHandler.GetProfile)
-		files := protected.Group("/files")
+		auth := api.Group("/auth")
 		{
-			files.POST("/upload", fileHandler.UploadFile)
-			files.GET("/", fileHandler.GetUserFiles)
-			files.GET("/:id", fileHandler.GetFile)
-			files.GET("/:id/download", fileHandler.DownloadFile)
-			files.DELETE("/:id", fileHandler.DeleteFile)
-			files.PUT("/:id/share", fileHandler.ShareFile)
+			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
 		}
-		folders := protected.Group("/folders")
-		{
-			folders.POST("/", fileHandler.CreateFolder)
-			folders.GET("/", fileHandler.GetUserFolders)
-		}
-		protected.GET("/storage/stats", fileHandler.GetStorageStats)
-	}
 
-	admin := api.Group("/admin")
-	admin.Use(middleware.AuthMiddleware(authService), middleware.AdminMiddleware())
-	{
-		admin.GET("/files", adminHandler.GetAllFiles)
-		admin.GET("/stats", adminHandler.GetSystemStats)
-		admin.GET("/users", adminHandler.GetUsers)
-		admin.GET("/audit-logs", adminHandler.GetAuditLogs)
+		// Group for all routes that require authentication
+		protected := api.Group("/")
+		protected.Use(middleware.AuthMiddleware(authService))
+		{
+			protected.GET("/profile", authHandler.GetProfile)
+			protected.GET("/storage/stats", fileHandler.GetStorageStats)
+
+			files := protected.Group("/files")
+			{
+				files.POST("/upload", fileHandler.UploadFile)
+				files.GET("", fileHandler.GetUserFiles) // Use "" for the group's root
+				files.GET("/:id/download", fileHandler.DownloadFile)
+				files.DELETE("/:id", fileHandler.DeleteFile)
+			}
+		}
+
+		admin := api.Group("/admin")
+		admin.Use(middleware.AuthMiddleware(authService), middleware.AdminMiddleware())
+		{
+			admin.GET("/files", adminHandler.GetAllFiles)
+			admin.GET("/stats", adminHandler.GetSystemStats)
+			admin.GET("/users", adminHandler.GetUsers)
+			admin.GET("/audit-logs", adminHandler.GetAuditLogs)
+		}
 	}
 
 	log.Printf("Server starting on port %s", cfg.Port)
-	log.Printf("CORS enabled for all origins")
 	if err := router.Run(":" + cfg.Port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
